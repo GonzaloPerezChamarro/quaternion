@@ -1,42 +1,88 @@
+
 #pragma once
 
-#include <vector>
+#include <directxmath.h>
 
+using namespace DirectX;
 
 class Quaternion
 {
+	typedef std::array<std::array<double, 3>, 3> Matrix33D;
 
-private:
-
-	float w;
-	float x;
-	float y;
-	float z;
-	
+public:
+	/* Components */
+	double w, x, y, z;
 
 public:
 
-	Quaternion();
+	/*----- CONSTRUCTORS -----*/
 
-	Quaternion(float w, float x, float y, float z);
+	/* Constructor */
+	Quaternion(float w = 0, float x = 0, float y = 0, float z = 0) :w(w), x(x), y(y), z(z) {}
 
+	/* Copy constructor */
 	Quaternion(const Quaternion & q);
 
+	/* Constructor from a vector3 and a real */
+	Quaternion(const XMFLOAT3& c, double r) :w(r), x(c.x), y(c.y), z(c.z) {}
+
+	/* Constructor from a float array */
 	Quaternion(float v[4]);
 
+	/*----- OPERATORS -----*/
 
-public:
+	Quaternion operator+(const Quaternion& q) const 
+	{
+		return Quaternion(w + q.w, x + q.x, y + q.y, z + q.z);
+	}
 
-	float get_w()const { return w; }
-	float get_x()const { return x; }
-	float get_y()const { return y; }
-	float get_z()const { return z; }
+	Quaternion operator-(const Quaternion& q) const
+	{
+		return Quaternion(w - q.w, x - q.x, y - q.y, z - q.z);
+	}
 
-	static void slerp(Quaternion q_a, Quaternion q_b, Quaternion &q_r, float time);
+	Quaternion operator*(const Quaternion& q) const
+	{
+		return Quaternion(y * q.z - z * q.y + x * q.w + w * q.x,
+						  z * q.x - x * q.z + y * q.w + w * q.y,
+						  x * q.y - y * q.x + z * q.w + w * q.z,
+						  w * q.w - x * q.x - y * q.y - z * q.z);
+		);
+	}
+
+	Quaternion operator*(double s) const 
+	{
+		return Quaternion(complex() * s, real() * s);
+	}
+
+	Quaternion operator/(double s) const
+	{
+		return Quaternion(complex() / s, real() / s);
+	}
+
+	/*----- METHODS -----*/
+
+	static Quaternion slerp(const Quaternion& q_a, const Quaternion& q_b, double time);
+
+	XMFLOAT4 vector() const { return XMFLOAT4(x, y, z, w); }
+
+	XMFLOAT3 complex() const { return XMLFLOAT3(x, y, z); }
+
+	double real() const { return w; }
 
 	void normalize();
 
-	Matrix33 & to_transform_matrix();
+	XMFLOAT3 euler() const;
 
+	Matrix33D to_transform_matrix() const;
 
+	Quaternion inverse() const
+	{
+		return conjugate() / normalize();
+	}
+
+	Quaternion conjugate() const
+	{
+		return Quaternion(q, -x, -y, -z);
+	}
 };
